@@ -7,11 +7,20 @@ Dynamical phenomena, such as recurrent neuronal activity  and perpetual motion o
 #### Teacher Training:
 Choose one of the following 
 
-teacher of version 1:
+###### teacher of version 1:
 python cifar_style.py --stopping_patience 30 --learning_patience 10 --resblocks 5 --no-last_maxpool_en --nl elu --width_shift_range 0.15 --height_shift_range 0.15 --rotation_range 5
 
-teacher of versions 2:
+###### teacher of versions 2:
 python cifar_style.py --stopping_patience 30 --learning_patience 10 --resblocks8 3 --resblocks16 3 --no-last_maxpool_en --nl elu --width_shift_range 0.15 --height_shift_range 0.15 --rotation_range 5 --network_topology v2
 
+###### teacher is ResNet50:
+python cifar_style.py --stopping_patience 30 --learning_patience 10 --width_shift_range 0.15 --height_shift_range 0.15 --rotation_range 5 --network_topology resnet50_on_imagenet
+
 #### DRC Training:
-python full_learning_extended_multi_traject109g.py --student_nl relu --teacher_net TEACHER_NET_PATH --dropout 0.0 --rnn_dropout 0.0 --conv_rnn_type gru --n_samples 5 --epochs 100 --int_epochs 1 --trajectories_num -1 --student_block_size 2 --broadcast 1 --style spiral_2dir2  --noise 0.5 --max_length 5 --time_pool average_pool --student_version 3 --upsample 7 --resnet_mode  --decoder_optimizer SGD --val_set_mult 1 --n_classes 10
+Choose one of the following 
+
+###### For teacher version 1 or 2:
+python DRC_training.py --student_nl elu --teacher_net TEACHER_NET_PATH --dropout 0.0 --rnn_dropout 0.0 --conv_rnn_type gru --n_samples 10 --epochs 100 --int_epochs 1 --trajectories_num -1 --student_block_size 2 --broadcast 0 --noise 0.5 --max_length 10 --time_pool average_pool --rnn_layer2 128 --rnn_layer1 64 --student_version 3 --style spiral_2dir2
+
+###### For ResNet50 teacher:
+python  DRC_training.py --student_nl relu --teacher_net TEACHER_NET_PATH --dropout 0.0 --rnn_dropout 0.0 --conv_rnn_type gru --n_samples 5 --epochs 100 --int_epochs 1 --trajectories_num -1 --student_block_size 2 --broadcast 1 --style spiral_2dir2  --noise 0.5 --max_length 5 --time_pool average_pool --student_version 3 --upsample 7 --resnet_mode  --decoder_optimizer SGD --val_set_mult 1 --n_classes 10
