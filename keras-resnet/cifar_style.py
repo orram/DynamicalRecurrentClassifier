@@ -41,7 +41,7 @@ parser.add_argument('--resblocks', default=3, type=int, help='resblocks')
 parser.add_argument('--resblocks16', default=3, type=int, help='resblocks')
 parser.add_argument('--resblocks8', default=3, type=int, help='resblocks')
 parser.add_argument('--epochs', default=200, type=int, help='epochs')
-parser.add_argument('--n_classes', default=100, type=int, help='epochs')
+parser.add_argument('--n_classes', default=10, type=int, help='epochs')
 parser.add_argument('--res', default=8, type=int, help='resolution, 0 for default')
 
 parser.add_argument('--last_layer_size', default=128, type=int, help='last_layer_size')

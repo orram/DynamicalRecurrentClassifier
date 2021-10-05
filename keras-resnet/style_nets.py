@@ -304,7 +304,7 @@ def parametric_net_befe(dropout1=0.2, dropout2=0.0, resblocks=3, layer_norm_res=
         if skip_conn:
             x = keras.layers.add([x, skip])
 
-    if last_maxpool_en:
+    if M:
         x = keras.layers.MaxPooling2D((2, 2),
                                       name='max_pool3')(x)
     else:

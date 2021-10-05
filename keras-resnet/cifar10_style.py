@@ -32,7 +32,7 @@ import cifar10_resnet50_lowResBaseline as cifar10_resnet50
 
 parser = argparse.ArgumentParser()
 # parser.add_argument('--network_topology', default='default', type=str, help='default or v2')
-parser.add_argument('--network_topology', default='resnet50_on_imagenet', type=str, help='default or v2')
+parser.add_argument('--network_topology', default='default', type=str, help='default or v2')
 
 
 parser.add_argument('--resblocks', default=3, type=int, help='resblocks')
