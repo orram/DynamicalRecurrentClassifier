@@ -1,14 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Jul 10 20:51:15 2021
 
-@author: orram
-"""
 import os 
 import sys
-sys.path.insert(1, '/home/labs/ahissarlab/orra/imagewalker')
-sys.path.insert(1, '/home/orram/Documents/GitHub/imagewalker')
+
 import random
 import numpy as np
 import tensorflow as tf
@@ -34,72 +27,7 @@ def net_weights_reinitializer(model):
                 ev(weight_initializer(ev(old_weights.shape))),
                 ev(bias_initializer(ev(old_biases.shape)))])
 
-def write_to_file(history, net,paramaters):
-    file_name = 'summary_file_feature_learning.txt'
-    if os.path.isfile('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name)):
-        file = open('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name), 'a')
-    else:
-        file = open('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name), 'x')
-        
-    
-    from datetime import datetime
-    file.write('#####################\n')
-    now = datetime.now()
-    now = now.strftime("%d/%m/%Y %H:%M:%S")
-    file.write(net.name + '\n')
-    file.write(now + '\n')
-    file.write(str(paramaters) + "\n")
-    min_test_error = min(history.history['val_mean_squared_error'])
-    min_train_error = min(history.history['mean_squared_error'])
-    summary_of_run = "min_test_error = {}, min_train_error = {} \n".\
-                        format(min_test_error,min_train_error)
-        
-    file.write(summary_of_run)
-    file.close()
 
-def dataset_update(history, net, parameters, name = '_'):
-    file_name = 'summary_dataframe_feature_learning_{}.pkl'.format(name)
-    if os.path.isfile('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name)):
-        dataframe = pd.read_pickle('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name))
-    else:
-        dataframe = pd.DataFrame()
-    
-    values_to_add = parameters
-    values_to_add['net_name'] = net.name
-    values_to_add['min_test_error'] = min(history.history['val_mean_squared_error'])
-    values_to_add['min_train_error'] = min(history.history['mean_squared_error'])
-    values_to_add['train_error'] = [history.history['mean_squared_error']]
-    values_to_add['test_error'] = [history.history['val_mean_squared_error']]
-    dataframe = dataframe.append(values_to_add, ignore_index = True)
-
-    dataframe.to_pickle('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name))
-
-def full_learning_dataset_update(student_history, 
-                                 decoder_history,
-                                 full_history,
-                                 net, parameters, name = '_'):
-    file_name = 'summary_dataframe_feature_learning_{}.pkl'.format(name)
-    if os.path.isfile('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name)):
-        dataframe = pd.read_pickle('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name))
-    else:
-        dataframe = pd.DataFrame()
-    values_to_add = parameters
-    values_to_add['net_name'] = net.name
-    values_to_add['student_min_test_error'] = min(student_history.history['val_mean_squared_error'])
-    values_to_add['student_min_train_error'] = min(student_history.history['mean_squared_error'])
-    values_to_add['student_train_error'] = [student_history.history['mean_squared_error']]
-    values_to_add['student_test_error'] = [student_history.history['val_mean_squared_error']]
-    values_to_add['decoder_max_test_error'] = max(decoder_history.history['val_sparse_categorical_accuracy'])
-    values_to_add['decoder_max_train_error'] = max(decoder_history.history['sparse_categorical_accuracy'])
-    values_to_add['decoder_train_error'] = [decoder_history.history['sparse_categorical_accuracy']]
-    values_to_add['decoder_test_error'] = [decoder_history.history['val_sparse_categorical_accuracy']]
-    values_to_add['full_max_test_error'] = max(full_history.history['val_sparse_categorical_accuracy'])
-    values_to_add['full_max_train_error'] = max(full_history.history['sparse_categorical_accuracy'])
-    values_to_add['full_train_error'] = [full_history.history['sparse_categorical_accuracy']]
-    values_to_add['full_test_error'] = [full_history.history['val_sparse_categorical_accuracy']]
-    dataframe = dataframe.append(values_to_add, ignore_index = True)
-
-    dataframe.to_pickle('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name))
 
 def traject_learning_dataset_update(train_accur,
                                     test_accur, 
@@ -111,8 +39,9 @@ def traject_learning_dataset_update(train_accur,
     
     '''
     file_name = 'summary_dataframe_feature_learning_{}.pkl'.format(name)
-    if os.path.isfile('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name)):
-        dataframe = pd.read_pickle('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name))
+    path = os.getcwd() 
+    if os.path.isfile(os.getcwd()  + '{}'.format(file_name)):
+        dataframe = pd.read_pickle(path +' {}'.format(file_name))
     else:
         dataframe = pd.DataFrame()
     values_to_add = parameters
@@ -131,7 +60,7 @@ def traject_learning_dataset_update(train_accur,
     # values_to_add['full_test_error'] = [full_history.history['val_sparse_categorical_accuracy']]
     dataframe = dataframe.append(values_to_add, ignore_index = True)
 
-    dataframe.to_pickle('/home/labs/ahissarlab/orra/imagewalker/teacher_student/feature_learning/{}'.format(file_name))
+    dataframe.to_pickle(path + '{}'.format(file_name))
 
 def save_model(net,path,parameters,checkpoint = True):
     feature = parameters['feature']
@@ -165,51 +94,7 @@ def save_model(net,path,parameters,checkpoint = True):
     #LOADING WITH - load_status = sequential_model.load_weights("ckpt")
     
 
-def load_student(path = '/home/orram/Documents/GitHub/imagewalker/teacher_student/',  run_name = 'noname_j178_t1630240486', student=None, num_samples = None):
 
-
-    temp_path = path + 'saved_models/{}_feature/'.format(run_name)
-    home_folder = temp_path + '{}_saved_models/'.format(run_name)
-    # home_folder = path
-
-    child_folder = home_folder + 'end_of_run_model/'
-    
-    
-    #loading weights as numpy array
-    numpy_weights_path = child_folder + '{}_numpy_weights/'.format(run_name)
-    with open(numpy_weights_path + 'numpy_weights_{}'.format(run_name), 'rb') as file_pi:
-        np_weights = pickle.load(file_pi)
-
-
-    if student is None:
-        data = pd.read_pickle(path + 'feature_learning/summary_dataframe_feature_learning_full_train_103.pkl')
-        parameters = data[data['this_run_name'] == run_name].to_dict('records')[0]
-        if num_samples:
-            parameters['max_length'] = num_samples
-        numpy_student = student3(sample = int(parameters['max_length']),
-                           res = int(parameters['res']),
-                            activation = parameters['student_nl'],
-                            dropout = parameters['dropout'],
-                            rnn_dropout = parameters['rnn_dropout'],
-                            num_feature = int(parameters['num_feature']),
-                           layer_norm = parameters['layer_norm_student'],
-                           conv_rnn_type = parameters['conv_rnn_type'],
-                           block_size = int(parameters['student_block_size']),
-                           add_coordinates = parameters['broadcast'],
-                           time_pool = parameters['time_pool'])
-    else:
-        numpy_student = student
-        parameters = []
-    layer_index = 0
-    for layer in numpy_student.layers:
-        if layer.name[:-2] == 'convLSTM':
-            print(layer.name)
-            layer_name = layer.name
-            saved_weights = [np_weights[layer_index], np_weights[layer_index+ 1], np_weights[layer_index+ 2]]
-            numpy_student.get_layer(layer_name).set_weights(saved_weights)
-            layer_index += 3
-            
-    return numpy_student, parameters
 
 def student3(sample = 10, res = 8, activation = 'tanh', dropout = 0.0, rnn_dropout = 0.0, upsample = 0,
              num_feature = 1, layer_norm = False ,batch_norm = False, n_layers=3, conv_rnn_type='lstm',block_size = 1,

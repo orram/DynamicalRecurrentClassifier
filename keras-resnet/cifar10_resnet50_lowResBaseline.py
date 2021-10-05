@@ -3,20 +3,8 @@ import os, re, time, json
 import numpy as np
 import sys
 
-sys.path.insert(1, '/home/labs/ahissarlab/arivkind/imagewalker')
-sys.path.insert(1, '/home/bnapp/arivkindNet/imagewalker/')
-# sys.path.insert(1, '/home/labs/ahissarlab/orra/imagewalker')
-# sys.path.insert(1, '/home/orram/Documents/GitHub/imagewalker')
-
-
 import cv2
-# try:
-#     # %tensorflow_version only exists in Colab.
-#     % tensorflow_version
-#     2.
-#     x
-# except Exception:
-#     pass
+
 import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.applications.resnet50 import ResNet50
@@ -30,15 +18,6 @@ import pdb
 from split_keras_model import split_model
 print("Tensorflow version " + tf.__version__)
 
-# (training_images, training_labels), (test_images, test_labels) = tf.keras.datasets.cifar10.load_data()
-
-# training_images = np.array([bad_res102(xx,(new_res,new_res)) for xx in training_images])
-#
-# validation_images = training_images[-5000:]
-# validation_labels = training_labels[-5000:]
-#
-# training_images = training_images[:-5000]
-# training_labels = training_labels[:-5000]
 
 
 def preprocess_image_input(input_images):

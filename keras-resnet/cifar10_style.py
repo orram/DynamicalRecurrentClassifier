@@ -13,10 +13,6 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 # from tensorflow.keras.utils import np_utils
 from tensorflow.keras.callbacks import ReduceLROnPlateau, CSVLogger, EarlyStopping
 import sys
-
-sys.path.insert(1, '/home/labs/ahissarlab/arivkind/imagewalker')
-sys.path.insert(1, '/home/bnapp/arivkindNet/imagewalker/')
-
 from misc import one_hot
 
 import numpy as np
