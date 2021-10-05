@@ -5,24 +5,21 @@ Some order to the code - the utils!
 from __future__ import division, print_function, absolute_import
 import numpy as np
 import cv2
-import misc
-from RL_networks import Stand_alone_net
-import pandas as pd
+
 import random
-import os 
+
 
 # import importlib
 # importlib.reload(misc)
 
 
-import matplotlib.pyplot as plt
+
 import SYCLOP_env as syc
 
-import tensorflow as tf
+
 import tensorflow.keras as keras
 from drift_intoy_and_rucci20 import gen_drift_traj_condition
 
-import numpy as np
 
 def build_cifar_padded(image,pad_size = 100, xx=132,yy=132,y_size=32,x_size=32,offset=(0,0)):
     #todo: double-check x-y vs. row-column convention

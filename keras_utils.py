@@ -7,10 +7,8 @@ from __future__ import division, print_function, absolute_import
 import numpy as np
 import cv2
 import misc
-from RL_networks import Stand_alone_net
-import pandas as pd
 import random
-import os 
+
 
 # import importlib
 # importlib.reload(misc)
@@ -18,10 +16,6 @@ import os
 
 import matplotlib.pyplot as plt
 import SYCLOP_env as syc
-
-import tensorflow as tf
-import tensorflow.keras as keras
-
 
 
 #Define function for low resolution lens on syclop

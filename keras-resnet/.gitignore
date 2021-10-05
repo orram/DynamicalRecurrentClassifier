@@ -1,7 +1,0 @@
-# test-related
-.coverage
-.cache
-
-# dev envs
-.idea/
-*.iml
