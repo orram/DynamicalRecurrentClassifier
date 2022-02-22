@@ -12,7 +12,7 @@ import scipy.stats as stats
 import pandas as pd
 import pickle
 from vanvalenlab_convolutional_recurrent import ConvGRU2D
-
+import argparse
 
 def net_weights_reinitializer(model):
     for ix, layer in enumerate(model.layers):
@@ -192,237 +192,131 @@ def student3(sample = 10, res = 8, activation = 'tanh', dropout = 0.0, rnn_dropo
     )
     return model
 
-
-
-
-def student3_one_image(sample=10, activation = 'relu', dropout = None, num_feature = 1):
-    input = keras.layers.Input(shape=(sample,8,8,3))
-    choose = np.random.randint(0,sample)
-    #Define CNN
-    #x = keras.layers.Conv2D(1,(3,3),activation='relu', padding = 'same', 
-    #                        name = 'convLSTM1')(input)
-    x = keras.layers.Conv2D(32,(3,3), padding = 'same', 
-                            activation=activation,name = 'conv1')(input[:,choose,:,:,:])
-    x = keras.layers.Dropout(dropout)(x)
-    x = keras.layers.Conv2D(64,(3,3), padding = 'same', 
-                               activation=activation, name = 'conv2')(x)
-    x = keras.layers.Dropout(dropout)(x)
-    x = keras.layers.Conv2D(num_feature,(3,3), padding = 'same', 
-                             activation=activation, name = 'conv3',)(x)
-    x = keras.layers.Dropout(dropout)(x)
-    print(x.shape)
-    model = keras.models.Model(inputs=input,outputs=x, name = 'student_3')
-    opt=tf.keras.optimizers.Adam(lr=1e-3)
-
-    model.compile(
-        optimizer=opt,
-        loss="mean_squared_error",
-        metrics=["mean_squared_error"],
-    )
-    return model
-
-
-
-def student32(sample = 10):
-    input = keras.layers.Input(shape=(sample, 8,8,3))
+def default_parameters():
+    parser = argparse.ArgumentParser(add_help=False)
+    #general parameters
+    parser.add_argument('--run_name_prefix', default='DRC_training', type=str, help='path to pretrained teacher net')
+    parser.add_argument('--run_index', default=10, type=int, help='run_index')
+    parser.add_argument('--verbose', default=2, type=int, help='run_index')
     
-    #Define CNN
-    #x = keras.layers.Conv2D(1,(3,3),activation='relu', padding = 'same', 
-    #                        name = 'convLSTM1')(input)
-    x = keras.layers.ConvLSTM2D(32,(3,3), padding = 'same', return_sequences=True,
-                            name = 'convLSTM1')(input)
-    x = keras.layers.ConvLSTM2D(64,(3,3), padding = 'same', return_sequences=True,
-                            name = 'convLSTM2')(x)
-    x = keras.layers.ConvLSTM2D(1,(3,3), padding = 'same', 
-                            name = 'convLSTM3')(x)
-    print(x.shape)
-    model = keras.models.Model(inputs=input,outputs=x, name = 'student_3')
-
-    return model
-
-def student4(sample = 10, res = 8, activation = 'tanh', dropout = 0.0, rnn_dropout = 0.0,
-             num_feature = 1, layer_norm = False , n_layers=3, conv_rnn_type='lstm',block_size = 1,
-             add_coordinates = False, time_pool = False, coordinate_mode=1, attention_net_size=64, attention_net_depth=1,
-             rnn_layer1=32,
-             rnn_layer2=64,
-             dense_interface=False, loss="mean_squared_error",**kwargs
-             ):
-    #TO DO add option for different block sizes in every convcnn
-    #TO DO add skip connections in the block
-    #coordinate_mode 1 - boardcast,
-    #coordinate_mode 2 - add via attention block
-    if time_pool == '0':
-        time_pool = 0
-    inputA = keras.layers.Input(shape=(sample, res,res,3))
-    if add_coordinates and coordinate_mode==1:
-        inputB = keras.layers.Input(shape=(sample,res,res,2))
-    else:
-        inputB = keras.layers.Input(shape=(sample,2))
-    if conv_rnn_type == 'lstm':
-        Our_RNN_cell = keras.layers.ConvLSTM2D
-    elif  conv_rnn_type == 'gru':
-        Our_RNN_cell = ConvGRU2D
-    else:
-        error("not supported type of conv rnn cell")
-
-    #Broadcast the coordinates to a [res,res,2] matrix and concat to x
-    if add_coordinates:
-        if coordinate_mode==1:
-            x = keras.layers.Concatenate()([inputA,inputB])
-        elif coordinate_mode==2:
-            x = inputA
-            a = keras.layers.GRU(attention_net_size,input_shape=(sample, None),return_sequences=True)(inputB)
-            for ii in range(attention_net_depth-1):
-                a = keras.layers.GRU(attention_net_size, input_shape=(sample, None), return_sequences=True)(a)
-    else:
-        x = inputA
-    print(x.shape)
-    x = Our_RNN_cell(rnn_layer1, (3, 3), padding='same', return_sequences=True,
-                     dropout=dropout, recurrent_dropout=rnn_dropout,
-                     name='convLSTM0{}'.format(0))(x)
-    for ind in range(block_size):
-        skip = x
-        x = Our_RNN_cell(rnn_layer2,(3,3), padding = 'same', return_sequences=True,
-                                dropout = dropout,recurrent_dropout=rnn_dropout,
-                            name = 'convLSTM1{}'.format(ind))(x)
-        x = Our_RNN_cell(rnn_layer2,(3,3), padding = 'same', return_sequences=True,
-                            name = 'convLSTM2{}'.format(ind),
-                            dropout = dropout,recurrent_dropout=rnn_dropout,)(x)
-        x = Our_RNN_cell(rnn_layer1, (3, 3), padding='same', return_sequences=True,
-                         dropout=dropout, recurrent_dropout=rnn_dropout,
-                         name='convLSTM3{}'.format(ind))(x)
-        x = keras.layers.add([x, skip])
-        x = keras.layers.LayerNormalization(axis=-1)(x)
-        if add_coordinates and coordinate_mode==2:
-            a_ = keras.layers.TimeDistributed(keras.layers.Dense(64,activation="tanh"))(a)
-            a_ = keras.layers.Reshape((sample, 1, 1, -1))(a_)
-            x = x * a_
-    if time_pool:
-        return_seq = True
-    else:
-        return_seq = False
-    x = Our_RNN_cell(num_feature,(3,3), padding = 'same', return_sequences=return_seq,
-                        name = 'convLSTM_f{}'.format(ind), activation=activation,
-                        dropout = dropout,recurrent_dropout=rnn_dropout,)(x)
-    if dense_interface:
-        if return_seq:
-            x = keras.layers.TimeDistributed(keras.layers.Conv2D(64, (3, 3), padding='same',
-                                    name='anti_sparse'))(x)
-        else:
-            x = keras.layers.Conv2D(64, (3, 3), padding='same',
-                                    name='anti_sparse')(x)
-    print(return_seq)
-    if time_pool:
-        print(time_pool)
-        if time_pool == 'max_pool':
-            x = tf.keras.layers.MaxPooling3D(pool_size=(sample, 1, 1))(x)
-        elif time_pool == 'average_pool':
-            x = tf.keras.layers.AveragePooling3D(pool_size=(sample, 1, 1))(x)
-        x = tf.squeeze(x,1)
-    if layer_norm:
-        x = keras.layers.LayerNormalization(axis=3)(x)
-
-    print(x.shape)
-    model = keras.models.Model(inputs=[inputA,inputB],outputs=x, name = 'student_3')
-    opt=tf.keras.optimizers.Adam(lr=1e-3)
-
-    model.compile(
-        optimizer=opt,
-        loss=loss,
-        metrics=["mean_squared_error", "mean_absolute_error", "cosine_similarity"],
-    )
-    return model
-
-def student5(sample = 10, res = 8, activation = 'tanh', dropout = 0.0, rnn_dropout = 0.0,
-             num_feature = 1, layer_norm = False , n_layers=3, conv_rnn_type='lstm',block_size = 1,
-             add_coordinates = False, time_pool = False, coordinate_mode=1, attention_net_size=64, attention_net_depth=1,
-             rnn_layer1=32,
-             rnn_layer2=64,
-             dense_interface=False, loss="mean_squared_error", **kwargs
-             ):
-    #TO DO add option for different block sizes in every convcnn
-    #TO DO add skip connections in the block
-    #coordinate_mode 1 - boardcast,
-    #coordinate_mode 2 - add via attention block
-    if time_pool == '0':
-        time_pool = 0
-    inputA = keras.layers.Input(shape=(sample, res,res,3))
-    if add_coordinates and coordinate_mode==1:
-        inputB = keras.layers.Input(shape=(sample,res,res,2))
-    else:
-        inputB = keras.layers.Input(shape=(sample,2))
-    if conv_rnn_type == 'lstm':
-        Our_RNN_cell = keras.layers.ConvLSTM2D
-    elif  conv_rnn_type == 'gru':
-        Our_RNN_cell = ConvGRU2D
-    else:
-        error("not supported type of conv rnn cell")
-
-    #Broadcast the coordinates to a [res,res,2] matrix and concat to x
-    if add_coordinates:
-        if coordinate_mode==1:
-            x = keras.layers.Concatenate()([inputA,inputB])
-        elif coordinate_mode==2:
-            x = inputA
-            a = keras.layers.GRU(attention_net_size,input_shape=(sample, None),return_sequences=True)(inputB)
-            for ii in range(attention_net_depth-1):
-                a = keras.layers.GRU(attention_net_size, input_shape=(sample, None), return_sequences=True)(a)
-    else:
-        x = inputA
-    print(x.shape)
-    x = Our_RNN_cell(rnn_layer1, (3, 3), padding='same', return_sequences=True,
-                     dropout=dropout, recurrent_dropout=rnn_dropout,
-                     name='convLSTM0{}'.format(0))(x)
-    for ind in range(block_size):
-        skip = x
-        x = Our_RNN_cell(rnn_layer2,(3,3), padding = 'same', return_sequences=True,
-                                dropout = dropout,recurrent_dropout=rnn_dropout,
-                            name = 'convLSTM1{}'.format(ind))(x)
-        x = Our_RNN_cell(rnn_layer2,(3,3), padding = 'same', return_sequences=True,
-                            name = 'convLSTM2{}'.format(ind),
-                            dropout = dropout,recurrent_dropout=rnn_dropout,)(x)
-        x = Our_RNN_cell(rnn_layer1, (3, 3), padding='same', return_sequences=True,
-                         dropout=dropout, recurrent_dropout=rnn_dropout,
-                         name='convLSTM3{}'.format(ind))(x)
-        x = keras.layers.LayerNormalization(axis=-1)(x)
-        x = keras.layers.add([x, skip])
-
-        if add_coordinates and coordinate_mode==2:
-            a_ = keras.layers.TimeDistributed(keras.layers.Dense(64,activation="tanh"))(a)
-            a_ = keras.layers.Reshape((sample, 1, 1, -1))(a_)
-            x = x * a_
-    if time_pool:
-        return_seq = True
-    else:
-        return_seq = False
-    x = Our_RNN_cell(num_feature,(3,3), padding = 'same', return_sequences=return_seq,
-                        name = 'convLSTM_f{}'.format(ind), activation=activation,
-                        dropout = dropout,recurrent_dropout=rnn_dropout,)(x)
-    if dense_interface:
-        if return_seq:
-            x = keras.layers.TimeDistributed(keras.layers.Conv2D(64, (3, 3), padding='same',
-                                    name='anti_sparse'))(x)
-        else:
-            x = keras.layers.Conv2D(64, (3, 3), padding='same',
-                                    name='anti_sparse')(x)
-    print(return_seq)
-    if time_pool:
-        print(time_pool)
-        if time_pool == 'max_pool':
-            x = tf.keras.layers.MaxPooling3D(pool_size=(sample, 1, 1))(x)
-        elif time_pool == 'average_pool':
-            x = tf.keras.layers.AveragePooling3D(pool_size=(sample, 1, 1))(x)
-        x = tf.squeeze(x,1)
-    if layer_norm:
-        x = keras.layers.LayerNormalization(axis=3)(x)
-
-    print(x.shape)
-    model = keras.models.Model(inputs=[inputA,inputB],outputs=x, name = 'student_3')
-    opt=tf.keras.optimizers.Adam(lr=1e-3)
-
-    model.compile(
-        optimizer=opt,
-        loss=loss,
-        metrics=["mean_squared_error","mean_absolute_error","cosine_similarity"],
-    )
-    return model
+    parser.add_argument('--testmode', dest='testmode', action='store_true')
+    parser.add_argument('--no-testmode', dest='testmode', action='store_false')
+    
+    ### student parameters
+    parser.add_argument('--epochs', default=100, type=int, help='num training epochs')
+    parser.add_argument('--int_epochs', default=1, type=int, help='num internal training epochs')
+    parser.add_argument('--decoder_epochs', default=10, type=int, help='num of decoder retraining epochs')
+    parser.add_argument('--num_feature', default=64, type=int, help='legacy to be discarded')
+    parser.add_argument('--rnn_layer1', default=32, type=int, help='legacy to be discarded')
+    parser.add_argument('--rnn_layer2', default=64, type=int, help='legacy to be discarded')
+    parser.add_argument('--time_pool', default='average_pool', help='time dimention pooling to use - max_pool, average_pool, 0')
+    
+     parser.add_argument('--upsample', default=7, type=int, help='spatial upsampling of input 0 for no')
+    
+    
+    parser.add_argument('--conv_rnn_type', default='gru', type=str, help='conv_rnn_type')
+    parser.add_argument('--student_nl', default='relu', type=str, help='non linearity')
+    parser.add_argument('--dropout', default=0.0, type=float, help='dropout1')
+    parser.add_argument('--rnn_dropout', default=0.0, type=float, help='dropout1')
+    parser.add_argument('--pretrained_student_path', default=None, type=str, help='pretrained student, works only with student3')
+    
+    parser.add_argument('--decoder_optimizer', default='SGD', type=str, help='Adam or SGD')
+    
+    parser.add_argument('--skip_student_training', dest='skip_student_training', action='store_true')
+    parser.add_argument('--no-skip_student_training', dest='skip_student_training', action='store_false')
+    
+    parser.add_argument('--fine_tune_student', dest='fine_tune_student', action='store_true')
+    parser.add_argument('--no-fine_tune_student', dest='fine_tune_student', action='store_false')
+    
+    parser.add_argument('--layer_norm_student', dest='layer_norm_student', action='store_true')
+    parser.add_argument('--no-layer_norm_student', dest='layer_norm_student', action='store_false')
+    
+    parser.add_argument('--batch_norm_student', dest='batch_norm_student', action='store_true')
+    parser.add_argument('--no-batch_norm_student', dest='batch_norm_student', action='store_false')
+    
+    parser.add_argument('--val_set_mult', default=5, type=int, help='repetitions of validation dataset to reduce trajectory noise')
+    
+    
+    ### syclop parameters
+    parser.add_argument('--trajectory_index', default=0, type=int, help='trajectory index - set to 0 because we use multiple trajectories')
+    
+    parser.add_argument('--res', default=8, type=int, help='resolution')
+    parser.add_argument('--trajectories_num', default=-1, type=int, help='number of trajectories to use')
+    parser.add_argument('--broadcast', default=1, type=int, help='1-integrate the coordinates by broadcasting them as extra dimentions, 2- add coordinates as an extra input')
+    
+    parser.add_argument('--loss', default='mean_squared_error', type=str, help='loss type for student')
+    parser.add_argument('--noise', default=0.5, type=float, help='added noise to the const_p_noise style')
+    parser.add_argument('--max_length', default=5, type=int, help='choose syclops max trajectory length')
+    
+    
+    ### teacher network parameters
+    
+    
+    parser.add_argument('--resblocks', default=3, type=int, help='resblocks')
+    parser.add_argument('--student_version', default=3, type=int, help='student version')
+    
+    parser.add_argument('--last_layer_size', default=128, type=int, help='last_layer_size')
+    
+    
+    parser.add_argument('--dropout1', default=0.2, type=float, help='dropout1')
+    parser.add_argument('--dropout2', default=0.0, type=float, help='dropout2')
+    parser.add_argument('--dataset_norm', default=128.0, type=float, help='dropout2')
+    parser.add_argument('--dataset_center', dest='dataset_center', action='store_true')
+    parser.add_argument('--no-dataset_center', dest='dataset_center', action='store_false')
+    
+    parser.add_argument('--dense_interface', dest='dense_interface', action='store_true')
+    parser.add_argument('--no-dense_interface', dest='dense_interface', action='store_false')
+    
+    parser.add_argument('--layer_norm_res', dest='layer_norm_res', action='store_true')
+    parser.add_argument('--no-layer_norm_res', dest='layer_norm_res', action='store_false')
+    
+    parser.add_argument('--layer_norm_2', dest='layer_norm_2', action='store_true')
+    parser.add_argument('--no-layer_norm_2', dest='layer_norm_2', action='store_false')
+    
+    parser.add_argument('--skip_conn', dest='skip_conn', action='store_true')
+    parser.add_argument('--no-skip_conn', dest='skip_conn', action='store_false')
+    
+    parser.add_argument('--last_maxpool_en', dest='last_maxpool_en', action='store_true')
+    parser.add_argument('--no-last_maxpool_en', dest='last_maxpool_en', action='store_false')
+    
+    
+    parser.add_argument('--resnet_mode', dest='resnet_mode', action='store_true')
+    parser.add_argument('--no-resnet_mode', dest='resnet_mode', action='store_false')
+    
+    parser.add_argument('--nl', default='relu', type=str, help='non linearity')
+    
+    parser.add_argument('--stopping_patience', default=10, type=int, help='stopping patience')
+    parser.add_argument('--learning_patience', default=5, type=int, help='stopping patience')
+    parser.add_argument('--manual_suffix', default='', type=str, help='manual suffix')
+    
+    parser.add_argument('--data_augmentation', dest='data_augmentation', action='store_true')
+    parser.add_argument('--no-data_augmentation', dest='data_augmentation', action='store_false')
+    
+    parser.add_argument('--rotation_range', default=0.0, type=float, help='dropout1')
+    parser.add_argument('--width_shift_range', default=0.1, type=float, help='dropout2')
+    parser.add_argument('--height_shift_range', default=0.1, type=float, help='dropout2')
+    
+    ##advanced trajectory parameters
+    parser.add_argument('--time_sec', default=0.3, type=float, help='time for realistic trajectory')
+    parser.add_argument('--traj_out_scale', default=4.0, type=float, help='scaling to match receptor size')
+    
+    parser.add_argument('--snellen', dest='snellen', action='store_true')
+    parser.add_argument('--no-snellen', dest='snellen', action='store_false')
+    
+    parser.add_argument('--vm_kappa', default=0., type=float, help='factor for emulating sub and super diffusion')
+    
+    parser.set_defaults(data_augmentation=True,
+                    layer_norm_res=True,
+                    layer_norm_student=True,
+                    batch_norm_student=False,
+                    layer_norm_2=True,
+                    skip_conn=True,
+                    last_maxpool_en=True,
+                    testmode=False,
+                    dataset_center=True,
+                    dense_interface=False,
+                    resnet_mode=True,
+                    skip_student_training=False,
+                    fine_tune_student=False,
+                    snellen=True)
+    return parser
