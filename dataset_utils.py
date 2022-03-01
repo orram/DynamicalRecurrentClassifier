@@ -15,11 +15,30 @@ import random
 
 
 import SYCLOP_env as syc
-
+import cifar10_resnet50_lowResBaseline as cifar10_resnet50
 
 import tensorflow.keras as keras
 from drift_intoy_and_rucci20 import gen_drift_traj_condition
 
+def dataset_preprocessing(train, test,dataset_norm, resnet_mode=False):
+    # convert from integers to floats
+    if resnet_mode:
+        train_norm = cifar10_resnet50.preprocess_image_input(train)
+        test_norm = cifar10_resnet50.preprocess_image_input(test)
+        print('preprocessing in resnet mode')
+    else:
+        train_norm = train.astype('float32')
+        test_norm = test.astype('float32')
+        #center
+        if dataset_norm:
+            mean_image = np.mean(train_norm, axis=0)
+            train_norm -= mean_image
+            test_norm -= mean_image
+        # normalize to range 0-1
+        train_norm = train_norm / dataset_norm
+        test_norm = test_norm /  dataset_norm
+        # return normalized images
+    return train_norm, test_norm
 
 def build_cifar_padded(image,pad_size = 100, xx=132,yy=132,y_size=32,x_size=32,offset=(0,0)):
     #todo: double-check x-y vs. row-column convention
@@ -164,7 +183,7 @@ def create_trajectory(starting_point, n_samples = 5, style = 'brownian', noise =
     return steps
 
 
-def generate_syclopic_images(images, res, n_samples = 5, mixed_state = True, add_traject = True,
+def generate_drc_images(images, res, n_samples = 5, mixed_state = True, add_traject = True,
                    trajectory_list=0, n_trajectories = 20,
                    bad_res_func = bad_res102, up_sample = False, broadcast = 0,
                    style = 'brownian', noise = 0.15, max_length = 20, loud=False, **kwargs):
@@ -299,10 +318,10 @@ def generate_syclopic_images(images, res, n_samples = 5, mixed_state = True, add
     else:
         return np.array(ts_images)
 
-class Syclopic_dataset_generator(keras.utils.Sequence):
+class DRC_dataset_generator(keras.utils.Sequence):
     'Generates data for Keras'
     def __init__(self, images, labels, batch_size=None, movie_dim=None, position_dim=None,
-                 n_classes=None, shuffle=True, syclopic_function=generate_syclopic_images, retutn_x0_only=False,
+                 n_classes=None, shuffle=True, syclopic_function=generate_drc_images, retutn_x0_only=False,
                  prep_data_per_batch=False,one_hot_labels=False, one_random_sample=False, validation_mode=False, loud_en=False, teacher=None, preprocess_fun=lambda x:x, augmenter=None, **kwargs):
         list_IDs = list(range(len(images)))
         'Initialization'

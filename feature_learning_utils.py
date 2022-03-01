@@ -14,6 +14,7 @@ import pickle
 from vanvalenlab_convolutional_recurrent import ConvGRU2D
 import argparse
 
+
 def net_weights_reinitializer(model):
     for ix, layer in enumerate(model.layers):
         if hasattr(model.layers[ix], 'kernel_initializer') and \
@@ -29,7 +30,7 @@ def net_weights_reinitializer(model):
 
 
 
-def traject_learning_dataset_update(train_accur,
+def traject_learning_dataframe_update(train_accur,
                                     test_accur, 
                                  decoder_history,
                                  #full_history,
@@ -38,7 +39,7 @@ def traject_learning_dataset_update(train_accur,
     TODO combine all write to dataframe functions! 
     
     '''
-    file_name = 'summary_dataframe_feature_learning_{}.pkl'.format(name)
+    file_name = 'summary_dataframe_{}.pkl'.format(name)
     path = os.getcwd() 
     if os.path.isfile(os.getcwd()  + '{}'.format(file_name)):
         dataframe = pd.read_pickle(path +' {}'.format(file_name))
@@ -211,7 +212,7 @@ def default_parameters():
     parser.add_argument('--rnn_layer2', default=64, type=int, help='legacy to be discarded')
     parser.add_argument('--time_pool', default='average_pool', help='time dimention pooling to use - max_pool, average_pool, 0')
     
-     parser.add_argument('--upsample', default=7, type=int, help='spatial upsampling of input 0 for no')
+    parser.add_argument('--upsample', default=7, type=int, help='spatial upsampling of input 0 for no')
     
     
     parser.add_argument('--conv_rnn_type', default='gru', type=str, help='conv_rnn_type')
@@ -251,7 +252,8 @@ def default_parameters():
     
     ### teacher network parameters
     
-    
+    parser.add_argument('--network_topology', default='resnet50_on_imagenet', type=str, help='default, v2 or resnet50_on_imagenet')
+ 
     parser.add_argument('--resblocks', default=3, type=int, help='resblocks')
     parser.add_argument('--student_version', default=3, type=int, help='student version')
     
@@ -320,3 +322,5 @@ def default_parameters():
                     fine_tune_student=False,
                     snellen=True)
     return parser
+
+
