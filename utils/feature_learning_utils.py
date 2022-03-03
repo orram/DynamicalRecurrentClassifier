@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 import pandas as pd
 import pickle
-from vanvalenlab_convolutional_recurrent import ConvGRU2D
+from utils.vanvalenlab_convolutional_recurrent import ConvGRU2D
 import argparse
 
 
@@ -322,5 +322,4 @@ def default_parameters():
                     fine_tune_student=False,
                     snellen=True)
     return parser
-
 

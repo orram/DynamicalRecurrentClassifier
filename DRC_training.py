@@ -12,11 +12,11 @@ from tensorflow.keras.datasets import cifar10, cifar100
 
 import time
 import argparse
-from feature_learning_utils import  student3, traject_learning_dataframe_update, default_parameters
-from dataset_utils import DRC_dataset_generator, test_num_of_trajectories, dataset_preprocessing
-from cifar_style import train_teacher
+from utils.feature_learning_utils import  student3, traject_learning_dataframe_update, default_parameters
+from dataset.dataset_utils import DRC_dataset_generator, test_num_of_trajectories, dataset_preprocessing
 
-from vanvalenlab_convolutional_recurrent import ConvGRU2D
+
+from utils.vanvalenlab_convolutional_recurrent import ConvGRU2D
 
 print(os.getcwd() + '/')
 #%%
@@ -63,6 +63,7 @@ trainX, testX = dataset_preprocessing(trainX, testX,
                                       dataset_norm = config['dataset_norm'], 
                                       resnet_mode=config['resnet_mode'])
 
+config_memory = config.copy()
 
 #%%
 #########################   Get Trained Teacher      #########################
@@ -71,7 +72,9 @@ def get_teacher():
     if os.path.exists(config['teacher_net']):
         teacher = keras.models.load_model(config['teacher_net'])
     else:
+        from pretrained_teachers.cifar_style import train_teacher
         teacher = train_teacher(n_classes = config['n_classes'],network_topology=config['network_topology'])
+        
         
     teacher.summary()
     teacher.evaluate(trainX[45000:], trainY[45000:], verbose=2)
@@ -83,7 +86,7 @@ def get_teacher():
     fe_model = teacher.layers[0]
     be_model = teacher.layers[1]
     
-    return fe_model, be_model
+    return fe_model, be_model, config
 
 def get_student():
     if config['student_version']==3:

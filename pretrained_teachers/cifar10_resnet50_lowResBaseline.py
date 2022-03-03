@@ -11,11 +11,11 @@ from tensorflow.keras.applications.resnet50 import ResNet50
 from tensorflow.keras.datasets import cifar10, cifar100
 
 from matplotlib import pyplot as plt
-from keras_utils import create_cifar_dataset, split_dataset_xy
+from dataset.keras_utils import create_cifar_dataset, split_dataset_xy
 import argparse
 # import tensorflow_datasets as tfds
 import pdb
-from split_keras_model import split_model
+from pretrained_teachers.split_keras_model import split_model
 print("Tensorflow version " + tf.__version__)
 
 

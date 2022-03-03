@@ -14,11 +14,13 @@ import random
 
 
 
-import SYCLOP_env as syc
-import cifar10_resnet50_lowResBaseline as cifar10_resnet50
+import dataset.SYCLOP_env as syc
+from dataset.drift_intoy_and_rucci20 import gen_drift_traj_condition
+
+import pretrained_teachers.cifar10_resnet50_lowResBaseline as cifar10_resnet50
 
 import tensorflow.keras as keras
-from drift_intoy_and_rucci20 import gen_drift_traj_condition
+
 
 def dataset_preprocessing(train, test,dataset_norm, resnet_mode=False):
     # convert from integers to floats

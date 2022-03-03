@@ -2,7 +2,7 @@
 import numpy as np
 import time
 import sys
-from misc import HP
+from dataset.misc import HP
 import cv2
 # cv2.ocl.setUseOpenCL(True)
 

@@ -6,7 +6,7 @@ Some order to the code - the utils!
 from __future__ import division, print_function, absolute_import
 import numpy as np
 import cv2
-import misc
+import dataset.misc as misc
 import random
 
 
@@ -15,7 +15,7 @@ import random
 
 
 import matplotlib.pyplot as plt
-import SYCLOP_env as syc
+import dataset.SYCLOP_env as syc
 
 
 #Define function for low resolution lens on syclop
