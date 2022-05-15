@@ -24,4 +24,5 @@ And change other configs to:
 
 python DRC_training.py --network_topology v2 --broadcast 0 --rnn_layer2 128 --rnn_layer1 64 --no-resnet_mode --upsample 8 --decoder_optimizer Adam
 
+### Main results
 ![text](https://github.com/orram/DynamicalRecurrentClassifier/blob/main/main_result_table.png)
