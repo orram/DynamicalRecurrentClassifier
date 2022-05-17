@@ -14,7 +14,7 @@ import time
 import argparse
 from utils.feature_learning_utils import  student3, traject_learning_dataframe_update, default_parameters
 from dataset.dataset_utils import DRC_dataset_generator, test_num_of_trajectories, dataset_preprocessing
-
+import pretrained_teachers.cifar10_resnet50_lowResBaseline as cifar10_resnet50
 
 from utils.vanvalenlab_convolutional_recurrent import ConvGRU2D
 
@@ -74,10 +74,13 @@ def get_teacher():
     else:
         from pretrained_teachers.cifar_style import train_teacher
         teacher = train_teacher(n_classes = config['n_classes'],network_topology=config['network_topology'])
-        
-        
+      
+    #Y_train = y_train[:-validate_at_last]
+    Y_val = trainY[45000:]
+    #X_train = cifar10_resnet50.preprocess_image_input(X_train)
+    X_val = cifar10_resnet50.preprocess_image_input(trainX[45000:])
     teacher.summary()
-    teacher.evaluate(trainX[45000:], trainY[45000:], verbose=2)
+    teacher.evaluate(X_val, Y_val, verbose=2)
     #Divide the teacher to front-end (fe_model) and back-end (be_model) parts:
         #Front-end - the early layers of the teacher to be replaced with the 
         #            recurrent DRC
